@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400">
+<title>BankMetric Store — Architecture Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0B0F1A; color: #E2E8F0; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  .header { padding: 28px 48px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .header-inner { max-width: 1320px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #0D7377, #6D28D9); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; }
+  .logo h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.5px; color: #F1F5F9; }
+  .logo .badge { background: rgba(109,40,217,0.2); color: #A78BFA; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+  .logo .subtitle { margin: 6px 0 0 50px; font-size: 12px; color: #64748B; }
+  .legend { display: flex; gap: 20px; font-size: 11px; color: #64748B; }
+  .legend span.dot { font-weight: 600; }
+
+  .content { max-width: 1320px; margin: 0 auto; padding: 28px 48px 48px; }
+
+  .layer { margin-bottom: 8px; }
+  .layer-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding-left: 4px; }
+  .layer-bar { width: 3px; height: 20px; border-radius: 2px; }
+  .layer-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  .layer-sub { font-size: 11px; color: #64748B; }
+
+  .items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .item {
+    flex: 1 1 0;
+    min-width: 180px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: all 0.15s;
+    cursor: pointer;
+    position: relative;
+  }
+  .item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+  .item.wide { flex: 1 1 45%; min-width: 320px; }
+  .item-inner { display: flex; align-items: flex-start; gap: 10px; }
+  .item-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+  .item-label { font-size: 12.5px; font-weight: 600; color: #F1F5F9; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .item-desc { font-size: 10.5px; color: #64748B; line-height: 1.5; }
+  .tech-badge {
+    font-size: 9px; font-weight: 600; padding: 1px 7px; border-radius: 4px;
+  }
+  .tech-java { background: rgba(30,64,175,0.2); color: #93AAFD; }
+  .tech-python { background: rgba(13,115,119,0.2); color: #5EEAD4; }
+  .tech-sql { background: rgba(146,64,14,0.2); color: #FBBF24; }
+  .tech-redis { background: rgba(220,38,38,0.15); color: #FCA5A5; }
+  .tech-kafka { background: rgba(5,150,105,0.15); color: #6EE7B7; }
+  .tech-git { background: rgba(255,255,255,0.08); color: #94A3B8; }
+  .tech-node { background: rgba(109,40,217,0.15); color: #C4B5FD; }
+
+  .connector {
+    display: flex; align-items: center; justify-content: center; padding: 6px 0;
+  }
+  .connector-inner { display: flex; flex-direction: column; align-items: center; }
+  .connector-line { width: 1px; height: 8px; background: rgba(255,255,255,0.1); }
+  .connector-label {
+    font-size: 9px; color: #475569; font-weight: 500;
+    padding: 2px 12px; background: rgba(255,255,255,0.03);
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
+  }
+  .connector-arrow {
+    width: 0; height: 0;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid rgba(255,255,255,0.15);
+    margin-top: 2px;
+  }
+
+  .flow-summary {
+    margin-top: 28px; padding: 20px 24px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+  }
+  .flow-title { font-size: 10px; font-weight: 700; color: #64748B; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 14px; }
+  .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .flow-item { display: flex; align-items: flex-start; gap: 10px; }
+  .flow-bar { width: 3px; height: 32px; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
+  .flow-label { font-size: 11.5px; font-weight: 600; color: #CBD5E1; }
+  .flow-desc { font-size: 10.5px; color: #64748B; line-height: 1.45; }
+
+  /* Detail panel (tooltip on hover) */
+  .detail-tooltip {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 340px;
+    max-width: 420px;
+    background: #141926;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  }
+  .item:hover .detail-tooltip { display: block; }
+  .detail-title { font-size: 13px; font-weight: 700; color: #F1F5F9; margin-bottom: 14px; }
+  .detail-section { margin-bottom: 14px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-heading { font-size: 9.5px; font-weight: 700; color: #64748B; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .detail-item { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; font-size: 11px; color: #CBD5E1; line-height: 1.45; }
+  .detail-item .bullet { color: #475569; font-size: 9px; margin-top: 3px; flex-shrink: 0; }
+  .detail-item.mono { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="logo">
+        <div class="logo-icon">◈</div>
+        <h1>BankMetric Store</h1>
+        <span class="badge">ARCHITECTURE</span>
+      </div>
+      <p class="subtitle">Digital Data Mart MVP · SQL Server · Java + Python · GraphQL</p>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="color:#1E40AF">●</span> Java Services</span>
+      <span><span class="dot" style="color:#0D7377">●</span> Python Services</span>
+      <span><span class="dot" style="color:#6D28D9">●</span> GraphQL / Node</span>
+      <span><span class="dot" style="color:#92400E">●</span> SQL Server</span>
+      <span style="color:#475569">Hover any box for details</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ════ LAYER 1: CONSUMPTION ════ -->
+  <div class="layer">
+    <div class="layer-header">
+      <div class="layer-bar" style="background:#0D7377"></div>
+      <span class="layer-label" style="color:#0D7377">CONSUMPTION LAYER</span>
+      <span class="layer-sub">— Metric Consumers</span>
+    </div>
+    <div class="items">
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">📊</span>
+          <div>
+            <div class="item-label">Tableau / PowerBI</div>
+            <div class="item-desc">BI dashboards connected via GraphQL data connector. Auto-refreshes on metric computation schedule.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">🐍</span>
+          <div>
+            <div class="item-label">Jupyter / Python SDK</div>
+            <div class="item-desc">Data science notebooks querying governed metrics via lightweight Python client library.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">⚛️</span>
+          <div>
+            <div class="item-label">BankMetric UI</div>
+            <div class="item-desc">React application — metric catalog, authoring forms, approval queue, before/after diffs.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">🤖</span>
+          <div>
+            <div class="item-label">ML Feature Store</div>
+            <div class="item-desc">Governed metrics as ML features — ensures model inputs match reported business metrics.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">📱</span>
+          <div>
+            <div class="item-label">Executive Mobile</div>
+            <div class="item-desc">Mobile dashboard for C-suite — KPI snapshots, quality scores, trend alerts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="connector-inner"><div class="connector-line"></div><span class="connector-label">GraphQL queries over HTTPS</span><div class="connector-arrow"></div></div></div>
+
+  <!-- ════ LAYER 2: API GATEWAY ════ -->
+  <div class="layer">
+    <div class="layer-header">
+      <div class="layer-bar" style="background:#6D28D9"></div>
+      <span class="layer-label" style="color:#6D28D9">API GATEWAY</span>
+      <span class="layer-sub">— GraphQL Federation Layer</span>
+    </div>
+    <div class="items">
+      <div class="item wide" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">🔮</span>
+          <div>
+            <div class="item-label">Apollo Federation Gateway <span class="tech-badge tech-node">Node.js</span></div>
+            <div class="item-desc">Single GraphQL endpoint composing subgraphs from all services. Schema stitching, query planning, DataLoader batching, and request deduplication.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">Apollo Federation Gateway</div>
+          <div class="detail-section">
+            <div class="detail-heading">Subgraphs</div>
+            <div class="detail-item"><span class="bullet">▸</span> Catalog Subgraph → Catalog Service (Java)</div>
+            <div class="detail-item"><span class="bullet">▸</span> Compute Subgraph → Computation Service (Python)</div>
+            <div class="detail-item"><span class="bullet">▸</span> Quality Subgraph → Quality Service (Python)</div>
+            <div class="detail-item"><span class="bullet">▸</span> Governance Subgraph → Governance Service (Java)</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Key Capabilities</div>
+            <div class="detail-item"><span class="bullet">▸</span> Apollo Server 4 with Federation 2 routing</div>
+            <div class="detail-item"><span class="bullet">▸</span> DataLoader for batching and caching service calls</div>
+            <div class="detail-item"><span class="bullet">▸</span> GraphQL Shield for permission layer before resolvers</div>
+            <div class="detail-item"><span class="bullet">▸</span> Subscription support for real-time quality score updates</div>
+          </div>
+        </div>
+      </div>
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">🔐</span>
+          <div>
+            <div class="item-label">Auth & RBAC</div>
+            <div class="item-desc">OAuth2 / mTLS authentication. OPA policy engine for field-level and row-level security. Full query audit logging.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">Auth & RBAC Layer</div>
+          <div class="detail-section">
+            <div class="detail-heading">Authentication</div>
+            <div class="detail-item"><span class="bullet">▸</span> OAuth2 / OpenID Connect — user authentication</div>
+            <div class="detail-item"><span class="bullet">▸</span> mTLS — service-to-service communication</div>
+            <div class="detail-item"><span class="bullet">▸</span> JWT tokens with metric-scope claims</div>
+            <div class="detail-item"><span class="bullet">▸</span> Active Directory / LDAP — bank SSO integration</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Authorization</div>
+            <div class="detail-item"><span class="bullet">▸</span> Open Policy Agent (OPA) — declarative policies</div>
+            <div class="detail-item"><span class="bullet">▸</span> Field-level: sensitive metrics restricted by role</div>
+            <div class="detail-item"><span class="bullet">▸</span> Row-level: regional managers scoped to their region</div>
+            <div class="detail-item"><span class="bullet">▸</span> Tier-based: who can author/approve at each tier</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Audit</div>
+            <div class="detail-item"><span class="bullet">▸</span> Every query logged: caller, timestamp, metric, params</div>
+            <div class="detail-item"><span class="bullet">▸</span> SOX-compliant tamper-evident audit trail</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="connector-inner"><div class="connector-line"></div><span class="connector-label">Resolvers delegate to microservices via REST / gRPC</span><div class="connector-arrow"></div></div></div>
+
+  <!-- ════ LAYER 3: SERVICES ════ -->
+  <div class="layer">
+    <div class="layer-header">
+      <div class="layer-bar" style="background:#1E40AF"></div>
+      <span class="layer-label" style="color:#1E40AF">SERVICE LAYER</span>
+      <span class="layer-sub">— Java + Python Microservices</span>
+    </div>
+    <div class="items">
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">☕</span>
+          <div>
+            <div class="item-label">Catalog Service <span class="tech-badge tech-java">Java</span></div>
+            <div class="item-desc">Spring Boot — metric CRUD, versioning, full-text search, algorithmic deduplication via Apache Calcite SQL parsing.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">Catalog Service — Java / Spring Boot</div>
+          <div class="detail-section">
+            <div class="detail-heading">Key APIs</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /metrics — create definition</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> PUT /metrics/{key}/versions — propose change</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> GET /metrics/{key} — fetch with history</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> GET /metrics/search?q= — catalog search</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> GET /metrics/{key}/lineage — dependency graph</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Tech Stack</div>
+            <div class="detail-item"><span class="bullet">▸</span> Java 17+ / Spring Boot 3.x / Spring Data JPA</div>
+            <div class="detail-item"><span class="bullet">▸</span> Apache Calcite — SQL parsing & column lineage</div>
+            <div class="detail-item"><span class="bullet">▸</span> Elasticsearch sidecar — metric search index</div>
+          </div>
+        </div>
+      </div>
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">🐍</span>
+          <div>
+            <div class="item-label">Computation Service <span class="tech-badge tech-python">Python</span></div>
+            <div class="item-desc">FastAPI — SQL generation from definitions, Spark batch jobs, Airflow scheduling, backfill engine.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">Computation Service — Python</div>
+          <div class="detail-section">
+            <div class="detail-heading">Key APIs</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /compute/{key} — on-demand computation</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /compute/batch — scheduled bulk run</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /compute/{key}/backfill — historical recompute</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> GET /compute/{key}/status — job status & logs</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Tech Stack</div>
+            <div class="detail-item"><span class="bullet">▸</span> Python 3.11+ / FastAPI / SQLAlchemy</div>
+            <div class="detail-item"><span class="bullet">▸</span> PySpark — batch computation engine</div>
+            <div class="detail-item"><span class="bullet">▸</span> Airflow — orchestration & scheduling</div>
+            <div class="detail-item"><span class="bullet">▸</span> Jinja2 — SQL template rendering</div>
+          </div>
+        </div>
+      </div>
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">🔍</span>
+          <div>
+            <div class="item-label">Quality Service <span class="tech-badge tech-python">Python</span></div>
+            <div class="item-desc">FastAPI — freshness checks, cross-source reconciliation, tolerance monitoring, PagerDuty/ServiceNow alerting.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">Quality Service — Python</div>
+          <div class="detail-section">
+            <div class="detail-heading">Quality Checks</div>
+            <div class="detail-item"><span class="bullet">▸</span> Freshness — source data within SLA window</div>
+            <div class="detail-item"><span class="bullet">▸</span> Completeness — NULL / missing record detection</div>
+            <div class="detail-item"><span class="bullet">▸</span> Cross-source reconciliation — tolerance comparison</div>
+            <div class="detail-item"><span class="bullet">▸</span> Duplicate detection — PK & composite key scans</div>
+            <div class="detail-item"><span class="bullet">▸</span> Tolerance monitoring — period-over-period anomalies</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Tech Stack</div>
+            <div class="detail-item"><span class="bullet">▸</span> Python 3.11+ / FastAPI</div>
+            <div class="detail-item"><span class="bullet">▸</span> Great Expectations — quality framework</div>
+            <div class="detail-item"><span class="bullet">▸</span> Prometheus — quality SLA dashboards</div>
+          </div>
+        </div>
+      </div>
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">✅</span>
+          <div>
+            <div class="item-label">Governance Service <span class="tech-badge tech-java">Java</span></div>
+            <div class="item-desc">Spring Boot — approval workflows, before/after diffs, impact analysis, tiering rules, notification engine, audit trail.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">Governance Service — Java / Spring Boot</div>
+          <div class="detail-section">
+            <div class="detail-heading">Key APIs</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /governance/{key}/submit — submit for review</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /governance/{key}/approve — approve change</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> POST /governance/{key}/reject — reject + comments</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> GET /governance/{key}/diff — before/after view</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> GET /governance/{key}/impact — downstream list</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Tech Stack</div>
+            <div class="detail-item"><span class="bullet">▸</span> Spring State Machine — workflow orchestration</div>
+            <div class="detail-item"><span class="bullet">▸</span> Apache Calcite — SQL diff & semantic comparison</div>
+            <div class="detail-item"><span class="bullet">▸</span> Spring Mail + Slack SDK — notifications</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="connector-inner"><div class="connector-line"></div><span class="connector-label">Read / write metric data via JDBC + pyodbc</span><div class="connector-arrow"></div></div></div>
+
+  <!-- ════ LAYER 4: STORAGE ════ -->
+  <div class="layer">
+    <div class="layer-header">
+      <div class="layer-bar" style="background:#92400E"></div>
+      <span class="layer-label" style="color:#D97706">STORAGE LAYER</span>
+      <span class="layer-sub">— Persistence & State</span>
+    </div>
+    <div class="items">
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">🗄️</span>
+          <div>
+            <div class="item-label">Metadata Store <span class="tech-badge tech-sql">SQL Server</span></div>
+            <div class="item-desc">Metric definitions, versions, ownership, approval records, audit logs, quality check results.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">SQL Server — Metadata Store</div>
+          <div class="detail-section">
+            <div class="detail-heading">Core Tables</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> metric_definitions — key, name, tier, status, owner</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> metric_versions — version_id, sql_logic, author, date</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> metric_dimensions — specs, allowed_values</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> source_views — unified view definitions</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> approval_records — requests, actions, comments</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> audit_log — all actions with actor + timestamp</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Design</div>
+            <div class="detail-item"><span class="bullet">▸</span> Immutable version history — append only</div>
+            <div class="detail-item"><span class="bullet">▸</span> Optimistic locking for concurrent edits</div>
+            <div class="detail-item"><span class="bullet">▸</span> Partitioned audit log by month</div>
+          </div>
+        </div>
+      </div>
+      <div class="item" style="position:relative">
+        <div class="item-inner">
+          <span class="item-icon">📦</span>
+          <div>
+            <div class="item-label">Computed Store <span class="tech-badge tech-sql">SQL Server</span></div>
+            <div class="item-desc">Pre-computed metric results, materialized views, aggregation cache for common dimension slices.</div>
+          </div>
+        </div>
+        <div class="detail-tooltip">
+          <div class="detail-title">SQL Server — Computed Metric Store</div>
+          <div class="detail-section">
+            <div class="detail-heading">Core Tables</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> metric_results — key, period, dims, value, version</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> materialized_views — pre-joined dimension tables</div>
+            <div class="detail-item mono"><span class="bullet">▸</span> aggregation_cache — daily→monthly→quarterly rollups</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-heading">Design</div>
+            <div class="detail-item"><span class="bullet">▸</span> Columnstore indexes for analytical queries</div>
+            <div class="detail-item"><span class="bullet">▸</span> Partitioned by period (monthly)</div>
+            <div class="detail-item"><span class="bullet">▸</span> Results tagged with definition_version</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">📝</span>
+          <div>
+            <div class="item-label">Definition Repo <span class="tech-badge tech-git">Git</span></div>
+            <div class="item-desc">Version-controlled SQL definitions. Full diff history, branch-based change proposals, merge on approval.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">⚡</span>
+          <div>
+            <div class="item-label">Metric Cache <span class="tech-badge tech-redis">Redis</span></div>
+            <div class="item-desc">Hot metric cache for frequently queried results. Session state, rate limiting for API gateway.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="connector-inner"><div class="connector-line"></div><span class="connector-label">Source view abstraction — batch ETL / CDC ingestion</span><div class="connector-arrow"></div></div></div>
+
+  <!-- ════ LAYER 5: SOURCES ════ -->
+  <div class="layer">
+    <div class="layer-header">
+      <div class="layer-bar" style="background:#991B1B"></div>
+      <span class="layer-label" style="color:#EF4444">SOURCE LAYER</span>
+      <span class="layer-sub">— Bank Data Sources (Upstream)</span>
+    </div>
+    <div class="items">
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">🌐</span>
+          <div>
+            <div class="item-label">Digital Data Mart <span class="tech-badge tech-sql">SQL Server</span></div>
+            <div class="item-desc">Web & mobile analytics — sessions, conversions, feature events, crash logs, clickstream.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">🏦</span>
+          <div>
+            <div class="item-label">Core Banking <span class="tech-badge tech-sql">SQL Server</span></div>
+            <div class="item-desc">FIS / Fiserv — accounts, transactions, customer master, product catalog.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">📡</span>
+          <div>
+            <div class="item-label">Event Stream <span class="tech-badge tech-kafka">Kafka</span></div>
+            <div class="item-desc">Real-time clickstream, transaction events, app telemetry for near-real-time metrics.</div>
+          </div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-inner">
+          <span class="item-icon">🏗️</span>
+          <div>
+            <div class="item-label">Enterprise DW <span class="tech-badge tech-sql">SQL Server</span></div>
+            <div class="item-desc">Consolidated warehouse — historical data, cross-domain joins, slowly changing dimensions.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ FLOW SUMMARY ════ -->
+  <div class="flow-summary">
+    <div class="flow-title">Data Flow Paths</div>
+    <div class="flow-grid">
+      <div class="flow-item">
+        <div class="flow-bar" style="background:#0D7377"></div>
+        <div>
+          <div class="flow-label">Query Path</div>
+          <div class="flow-desc">Consumer → GraphQL Gateway → Service Layer → SQL Server → Cached Response</div>
+        </div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-bar" style="background:#6D28D9"></div>
+        <div>
+          <div class="flow-label">Authoring Path</div>
+          <div class="flow-desc">BankMetric UI → Catalog Svc → Git + SQL Server → Governance Svc → Approval Workflow</div>
+        </div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-bar" style="background:#1E40AF"></div>
+        <div>
+          <div class="flow-label">Computation Path</div>
+          <div class="flow-desc">Airflow Scheduler → Compute Svc → Source SQL Execution → Computed Store → Redis Cache</div>
+        </div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-bar" style="background:#D97706"></div>
+        <div>
+          <div class="flow-label">Quality Path</div>
+          <div class="flow-desc">Cron Trigger → Quality Svc → Source Validation Checks → Score Update → Alert if Degraded</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

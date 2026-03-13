@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>BankMetric Store — Phase 1 Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #FFFFFF; color: #1A1A2E; font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; }
+
+  .header {
+    padding: 32px 48px 24px;
+    border-bottom: 3px solid #0A8F8F;
+  }
+  .header-inner { max-width: 1320px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-mark {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, #0A8F8F, #2DD4BF);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: white; font-weight: 700;
+  }
+  .logo h1 { font-size: 22px; font-weight: 700; color: #1A1A2E; letter-spacing: -0.5px; }
+  .logo .phase {
+    background: #E6F5F5; color: #0A8F8F;
+    padding: 3px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.5px; border: 1px solid #B2E0E0;
+  }
+  .header-sub { margin: 6px 0 0 54px; font-size: 13px; color: #6B7D99; }
+  .legend { display: flex; gap: 18px; font-size: 11px; color: #6B7D99; align-items: center; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+  .legend-item { display: flex; align-items: center; gap: 0; }
+
+  .content { max-width: 1320px; margin: 0 auto; padding: 32px 48px 48px; }
+
+  /* ── Layer ── */
+  .layer { margin-bottom: 0; }
+  .layer-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .layer-bar { width: 4px; height: 22px; border-radius: 2px; }
+  .layer-label { font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
+  .layer-sub { font-size: 12px; color: #6B7D99; font-weight: 400; }
+
+  /* ── Items ── */
+  .items { display: flex; gap: 10px; flex-wrap: wrap; }
+  .item {
+    flex: 1 1 0; min-width: 170px;
+    background: #FAFBFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .item:hover {
+    border-color: #0A8F8F;
+    box-shadow: 0 0 0 3px rgba(10,143,143,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    background: #FFFFFF;
+  }
+  .item.wide { flex: 1 1 45%; min-width: 320px; }
+  .item-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+  .item-name {
+    font-size: 12.5px; font-weight: 600; color: #1A1A2E;
+    display: flex; align-items: center; gap: 7px; margin-bottom: 4px; flex-wrap: wrap;
+  }
+  .item-desc { font-size: 10.5px; color: #6B7D99; line-height: 1.55; }
+
+  .tech-tag {
+    font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    display: inline-block; letter-spacing: 0.3px;
+  }
+  .t-java { background: #DBEAFE; color: #1D4ED8; }
+  .t-python { background: #D1FAE5; color: #047857; }
+  .t-sql { background: #FEF3C7; color: #92400E; }
+  .t-node { background: #EDE9FE; color: #6D28D9; }
+  .t-redis { background: #FEE2E2; color: #B91C1C; }
+  .t-git { background: #F3F4F6; color: #374151; }
+  .t-kafka { background: #D1FAE5; color: #065F46; }
+  .t-oss { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
+
+  /* ── Connectors (high contrast arrows) ── */
+  .connector {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 0;
+    position: relative;
+  }
+  .connector-line {
+    width: 2px; height: 12px;
+    background: #0A8F8F;
+  }
+  .connector-label {
+    font-size: 10px; color: #1A1A2E; font-weight: 600;
+    padding: 4px 16px;
+    background: #E6F5F5;
+    border: 1.5px solid #0A8F8F;
+    border-radius: 20px;
+    letter-spacing: 0.2px;
+  }
+  .connector-arrow {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #0A8F8F;
+    margin-top: 2px;
+  }
+  .connector-line-bottom {
+    width: 2px; height: 6px;
+    background: #0A8F8F;
+    margin-top: 0px;
+  }
+
+  /* Side arrows for horizontal data flow */
+  .flow-arrows {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex; justify-content: space-around;
+    pointer-events: none;
+  }
+
+  /* ── Detail tooltip ── */
+  .detail-tooltip {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 10px);
+    left: 0;
+    min-width: 360px;
+    max-width: 440px;
+    background: #FFFFFF;
+    border: 1.5px solid #0A8F8F;
+    border-radius: 10px;
+    padding: 20px 22px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  }
+  .item:hover .detail-tooltip { display: block; }
+  .dt-title { font-size: 14px; font-weight: 700; color: #1A1A2E; margin-bottom: 14px; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; }
+  .dt-section { margin-bottom: 14px; }
+  .dt-section:last-child { margin-bottom: 0; }
+  .dt-heading { font-size: 9.5px; font-weight: 700; color: #6B7D99; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 6px; }
+  .dt-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 5px; font-size: 11.5px; color: #374151; line-height: 1.5; }
+  .dt-item .bullet { color: #0A8F8F; font-size: 8px; margin-top: 5px; flex-shrink: 0; }
+  .dt-item.mono { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #1A1A2E; }
+
+  /* ── Flow Summary ── */
+  .flow-summary {
+    margin-top: 32px; padding: 24px 28px;
+    background: #FAFBFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 12px;
+  }
+  .flow-title { font-size: 10px; font-weight: 700; color: #6B7D99; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+  .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .flow-item { display: flex; align-items: flex-start; gap: 12px; }
+  .flow-bar { width: 4px; min-height: 36px; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
+  .flow-label { font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 2px; }
+  .flow-desc { font-size: 11px; color: #6B7D99; line-height: 1.5; }
+
+  /* ── OSS callout ── */
+  .oss-banner {
+    margin-top: 24px; padding: 18px 24px;
+    background: #F0FDF4;
+    border: 1.5px solid #86EFAC;
+    border-radius: 12px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .oss-banner-icon { font-size: 22px; flex-shrink: 0; }
+  .oss-banner-title { font-size: 12px; font-weight: 700; color: #166534; margin-bottom: 3px; }
+  .oss-banner-desc { font-size: 11px; color: #15803D; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════ HEADER ════════════════════════════════ -->
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="logo">
+        <div class="logo-mark">◈</div>
+        <h1>BankMetric Store</h1>
+        <span class="phase">PHASE 1</span>
+      </div>
+      <p class="header-sub">Digital Data Mart · SQL Server → Java + Python → GraphQL · Open-Source Stack</p>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#1D4ED8"></span>Java</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#047857"></span>Python</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#6D28D9"></span>Node / GraphQL</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#92400E"></span>SQL Server</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#166534;border:1px solid #86EFAC"></span>Open Source</div>
+      <span style="color:#94A3B8; font-size:10px; margin-left:8px">Hover for details →</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ════════════════════ LAYER 1: CONSUMPTION ════════════════════ -->
+<div class="layer">
+  <div class="layer-header">
+    <div class="layer-bar" style="background:#0A8F8F"></div>
+    <span class="layer-label" style="color:#0A8F8F">CONSUMPTION LAYER</span>
+    <span class="layer-sub">— Metric Consumers (all read from single GraphQL endpoint)</span>
+  </div>
+  <div class="items">
+    <div class="item">
+      <span class="item-icon">📊</span>
+      <div class="item-name">Tableau / PowerBI</div>
+      <div class="item-desc">BI dashboards query governed metrics via GraphQL data connector. Auto-refreshes on computation schedule.</div>
+    </div>
+    <div class="item">
+      <span class="item-icon">🐍</span>
+      <div class="item-name">Jupyter / Python SDK</div>
+      <div class="item-desc">Lightweight Python client wrapping GraphQL queries. pip install bankmetric-client.</div>
+    </div>
+    <div class="item">
+      <span class="item-icon">⚛️</span>
+      <div class="item-name">BankMetric UI <span class="tech-tag t-node">React</span></div>
+      <div class="item-desc">Catalog browsing, metric authoring, before/after diff review, approval workflows.</div>
+    </div>
+    <div class="item">
+      <span class="item-icon">🤖</span>
+      <div class="item-name">ML Feature Store</div>
+      <div class="item-desc">Governed metrics served as ML features — same definitions, same numbers, no drift.</div>
+    </div>
+    <div class="item">
+      <span class="item-icon">📱</span>
+      <div class="item-name">Executive Dashboards</div>
+      <div class="item-desc">KPI snapshots, quality scores, and trend alerts for leadership.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Arrow 1 -->
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">GraphQL queries over HTTPS (single endpoint)</div>
+  <div class="connector-arrow"></div>
+</div>
+
+<!-- ════════════════════ LAYER 2: API GATEWAY ════════════════════ -->
+<div class="layer">
+  <div class="layer-header">
+    <div class="layer-bar" style="background:#6D28D9"></div>
+    <span class="layer-label" style="color:#6D28D9">API GATEWAY</span>
+    <span class="layer-sub">— GraphQL Federation + Auth</span>
+  </div>
+  <div class="items">
+    <div class="item wide" style="position:relative">
+      <span class="item-icon">🔮</span>
+      <div class="item-name">Apollo Federation Gateway <span class="tech-tag t-node">Node.js</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">Single /graphql endpoint. Composes 4 subgraphs (Catalog, Compute, Quality, Governance). DataLoader batching. Schema introspection for auto-discovery.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">Apollo Federation Gateway</div>
+        <div class="dt-section">
+          <div class="dt-heading">Federated Subgraphs</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Catalog</strong> → Catalog Service (Java) — definitions, search, lineage</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Compute</strong> → Computation Service (Python) — metric values, backfills</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Quality</strong> → Quality Service (Python) — scores, check results</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Governance</strong> → Governance Service (Java) — approvals, diffs, audit</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Open-Source Stack</div>
+          <div class="dt-item"><span class="bullet">●</span> Apollo Server 4 (MIT License)</div>
+          <div class="dt-item"><span class="bullet">●</span> Apollo Gateway for federation routing</div>
+          <div class="dt-item"><span class="bullet">●</span> DataLoader — batching + caching service calls</div>
+          <div class="dt-item"><span class="bullet">●</span> GraphQL Shield — declarative permission layer</div>
+        </div>
+      </div>
+    </div>
+    <div class="item" style="position:relative">
+      <span class="item-icon">🔐</span>
+      <div class="item-name">Auth & RBAC <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">OAuth2 / JWT + Open Policy Agent (OPA). Field-level auth, row-level security, query audit logging. AD/LDAP integration.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">Authentication & Authorization</div>
+        <div class="dt-section">
+          <div class="dt-heading">Authentication</div>
+          <div class="dt-item"><span class="bullet">●</span> OAuth2 / OpenID Connect for user auth</div>
+          <div class="dt-item"><span class="bullet">●</span> JWT tokens with metric-scope claims</div>
+          <div class="dt-item"><span class="bullet">●</span> Active Directory / LDAP integration (bank SSO)</div>
+          <div class="dt-item"><span class="bullet">●</span> Service accounts via mTLS for system consumers</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Authorization (OPA — Open Source)</div>
+          <div class="dt-item"><span class="bullet">●</span> Field-level: sensitive metrics restricted by role</div>
+          <div class="dt-item"><span class="bullet">●</span> Row-level: regional managers scoped to their region</div>
+          <div class="dt-item"><span class="bullet">●</span> Tier-based: who can author/approve at each tier</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Audit Trail</div>
+          <div class="dt-item"><span class="bullet">●</span> Every query logged: caller, timestamp, metric, params</div>
+          <div class="dt-item"><span class="bullet">●</span> Persisted to SQL Server audit_log table</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Arrow 2 -->
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">Resolvers delegate to microservices (REST / gRPC)</div>
+  <div class="connector-arrow"></div>
+</div>
+
+<!-- ════════════════════ LAYER 3: SERVICES ════════════════════ -->
+<div class="layer">
+  <div class="layer-header">
+    <div class="layer-bar" style="background:#1D4ED8"></div>
+    <span class="layer-label" style="color:#1D4ED8">SERVICE LAYER</span>
+    <span class="layer-sub">— Java + Python Microservices (all open-source frameworks)</span>
+  </div>
+  <div class="items">
+    <div class="item" style="position:relative">
+      <span class="item-icon">☕</span>
+      <div class="item-name">Catalog Service <span class="tech-tag t-java">Java</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">Metric CRUD, versioning, full-text search, algorithmic SQL deduplication. Reads/writes metric definitions to SQL Server.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">Catalog Service — Java / Spring Boot</div>
+        <div class="dt-section">
+          <div class="dt-heading">Responsibilities</div>
+          <div class="dt-item"><span class="bullet">●</span> Metric definition CRUD with optimistic locking</div>
+          <div class="dt-item"><span class="bullet">●</span> Full-text search via Elasticsearch sidecar</div>
+          <div class="dt-item"><span class="bullet">●</span> Algorithmic deduplication — canonical SQL comparison</div>
+          <div class="dt-item"><span class="bullet">●</span> Composite metric detection & dependency graph</div>
+          <div class="dt-item"><span class="bullet">●</span> Immutable version history management</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Key APIs</div>
+          <div class="dt-item mono"><span class="bullet">●</span> POST /metrics — create definition</div>
+          <div class="dt-item mono"><span class="bullet">●</span> PUT /metrics/{key}/versions — propose change</div>
+          <div class="dt-item mono"><span class="bullet">●</span> GET /metrics/search?q= — catalog search</div>
+          <div class="dt-item mono"><span class="bullet">●</span> GET /metrics/{key}/lineage — dependency graph</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Open-Source Stack</div>
+          <div class="dt-item"><span class="bullet">●</span> Java 17+ / Spring Boot 3.x (Apache 2.0)</div>
+          <div class="dt-item"><span class="bullet">●</span> Spring Data JPA → SQL Server via mssql-jdbc</div>
+          <div class="dt-item"><span class="bullet">●</span> Apache Calcite — SQL parsing & column lineage (Apache 2.0)</div>
+          <div class="dt-item"><span class="bullet">●</span> Elasticsearch — search index (SSPL / Apache 2.0 via OpenSearch)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" style="position:relative">
+      <span class="item-icon">🐍</span>
+      <div class="item-name">Computation Service <span class="tech-tag t-python">Python</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">SQL generation from definitions, batch computation against SQL Server, scheduling, backfill engine for historical recomputation.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">Computation Service — Python</div>
+        <div class="dt-section">
+          <div class="dt-heading">Responsibilities</div>
+          <div class="dt-item"><span class="bullet">●</span> Generate executable SQL from metric definitions + runtime params</div>
+          <div class="dt-item"><span class="bullet">●</span> Execute queries directly against SQL Server</div>
+          <div class="dt-item"><span class="bullet">●</span> Write pre-computed results back to SQL Server computed store</div>
+          <div class="dt-item"><span class="bullet">●</span> Backfill engine — recompute historical data on definition change</div>
+          <div class="dt-item"><span class="bullet">●</span> Scheduled batch runs aligned with source data freshness</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Key APIs</div>
+          <div class="dt-item mono"><span class="bullet">●</span> POST /compute/{key} — on-demand computation</div>
+          <div class="dt-item mono"><span class="bullet">●</span> POST /compute/batch — scheduled bulk run</div>
+          <div class="dt-item mono"><span class="bullet">●</span> POST /compute/{key}/backfill — historical recompute</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Open-Source Stack</div>
+          <div class="dt-item"><span class="bullet">●</span> Python 3.11+ / FastAPI (MIT)</div>
+          <div class="dt-item"><span class="bullet">●</span> SQLAlchemy + pyodbc → SQL Server connectivity</div>
+          <div class="dt-item"><span class="bullet">●</span> Jinja2 — SQL template rendering</div>
+          <div class="dt-item"><span class="bullet">●</span> APScheduler or Celery — job scheduling (Phase 1)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" style="position:relative">
+      <span class="item-icon">🔍</span>
+      <div class="item-name">Quality Service <span class="tech-tag t-python">Python</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">Freshness, completeness, reconciliation, tolerance monitoring. All checks run queries against SQL Server source tables.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">Quality Service — Python</div>
+        <div class="dt-section">
+          <div class="dt-heading">Quality Checks (all against SQL Server)</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Freshness</strong> — source tables within declared SLA window</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Completeness</strong> — NULL / missing record detection</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Cross-source reconciliation</strong> — compare digital mart vs EDW totals</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Duplicate detection</strong> — PK & composite key scans</div>
+          <div class="dt-item"><span class="bullet">●</span> <strong>Tolerance monitoring</strong> — period-over-period anomaly detection</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Open-Source Stack</div>
+          <div class="dt-item"><span class="bullet">●</span> Python 3.11+ / FastAPI (MIT)</div>
+          <div class="dt-item"><span class="bullet">●</span> Great Expectations (Apache 2.0) — quality framework</div>
+          <div class="dt-item"><span class="bullet">●</span> SQLAlchemy + pyodbc → SQL Server</div>
+          <div class="dt-item"><span class="bullet">●</span> Prometheus client — quality SLA metrics (Apache 2.0)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" style="position:relative">
+      <span class="item-icon">✅</span>
+      <div class="item-name">Governance Service <span class="tech-tag t-java">Java</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">Approval workflows, before/after SQL diffs, impact analysis, tiering rules, notification engine, audit trail. All state in SQL Server.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">Governance Service — Java / Spring Boot</div>
+        <div class="dt-section">
+          <div class="dt-heading">Responsibilities</div>
+          <div class="dt-item"><span class="bullet">●</span> Approval state machine: Draft → Pending → Approved / Rejected</div>
+          <div class="dt-item"><span class="bullet">●</span> Before/after diff generation with SQL semantic comparison</div>
+          <div class="dt-item"><span class="bullet">●</span> Impact analysis — identify downstream consumers</div>
+          <div class="dt-item"><span class="bullet">●</span> Tiering rule enforcement (Operational vs Experimental paths)</div>
+          <div class="dt-item"><span class="bullet">●</span> Full audit trail — every action with actor + timestamp</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Key APIs</div>
+          <div class="dt-item mono"><span class="bullet">●</span> POST /governance/{key}/submit — submit for review</div>
+          <div class="dt-item mono"><span class="bullet">●</span> POST /governance/{key}/approve — approve change</div>
+          <div class="dt-item mono"><span class="bullet">●</span> GET /governance/{key}/diff — before/after view</div>
+          <div class="dt-item mono"><span class="bullet">●</span> GET /governance/{key}/impact — downstream list</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Open-Source Stack</div>
+          <div class="dt-item"><span class="bullet">●</span> Spring State Machine — workflow orchestration (Apache 2.0)</div>
+          <div class="dt-item"><span class="bullet">●</span> Apache Calcite — SQL diff & semantic comparison (Apache 2.0)</div>
+          <div class="dt-item"><span class="bullet">●</span> Spring Mail + Slack Java SDK — notifications</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Arrow 3 -->
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">JDBC (mssql-jdbc) + pyodbc — all reads/writes to SQL Server</div>
+  <div class="connector-arrow"></div>
+</div>
+
+<!-- ════════════════════ LAYER 4: STORAGE ════════════════════ -->
+<div class="layer">
+  <div class="layer-header">
+    <div class="layer-bar" style="background:#92400E"></div>
+    <span class="layer-label" style="color:#92400E">STORAGE LAYER</span>
+    <span class="layer-sub">— SQL Server (single backend) + supporting stores</span>
+  </div>
+  <div class="items">
+    <div class="item" style="position:relative">
+      <span class="item-icon">🗄️</span>
+      <div class="item-name">Metadata Store <span class="tech-tag t-sql">SQL Server</span></div>
+      <div class="item-desc">Metric definitions, versions, dimensions, ownership, approval records, quality results, audit logs.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">SQL Server — Metadata Store</div>
+        <div class="dt-section">
+          <div class="dt-heading">Core Tables</div>
+          <div class="dt-item mono"><span class="bullet">●</span> metric_definitions — key, name, tier, status, owner</div>
+          <div class="dt-item mono"><span class="bullet">●</span> metric_versions — version_id, sql_logic, effective_date, author</div>
+          <div class="dt-item mono"><span class="bullet">●</span> metric_dimensions — dimension specs, allowed_values</div>
+          <div class="dt-item mono"><span class="bullet">●</span> source_views — unified view definitions</div>
+          <div class="dt-item mono"><span class="bullet">●</span> approval_records — change requests, actions, comments</div>
+          <div class="dt-item mono"><span class="bullet">●</span> quality_results — check outcomes, scores, timestamps</div>
+          <div class="dt-item mono"><span class="bullet">●</span> audit_log — all actions with actor + timestamp</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Design Decisions</div>
+          <div class="dt-item"><span class="bullet">●</span> Immutable version history — append only, no updates</div>
+          <div class="dt-item"><span class="bullet">●</span> Optimistic locking (rowversion) for concurrent edits</div>
+          <div class="dt-item"><span class="bullet">●</span> Partitioned audit log by month for query performance</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" style="position:relative">
+      <span class="item-icon">📦</span>
+      <div class="item-name">Computed Metric Store <span class="tech-tag t-sql">SQL Server</span></div>
+      <div class="item-desc">Pre-computed results, materialized aggregations, dimension rollup cache. Columnstore indexes for analytical queries.</div>
+      <div class="detail-tooltip">
+        <div class="dt-title">SQL Server — Computed Metric Store</div>
+        <div class="dt-section">
+          <div class="dt-heading">Core Tables</div>
+          <div class="dt-item mono"><span class="bullet">●</span> metric_results — key, period, dimension_values (JSON), value, version</div>
+          <div class="dt-item mono"><span class="bullet">●</span> aggregation_cache — daily → monthly → quarterly rollups</div>
+        </div>
+        <div class="dt-section">
+          <div class="dt-heading">Design</div>
+          <div class="dt-item"><span class="bullet">●</span> Clustered columnstore index on metric_results</div>
+          <div class="dt-item"><span class="bullet">●</span> Partitioned by period (monthly) for fast range scans</div>
+          <div class="dt-item"><span class="bullet">●</span> Results tagged with definition_version for traceability</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="item-icon">📝</span>
+      <div class="item-name">Definition Repo <span class="tech-tag t-git">Git</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">Version-controlled SQL definitions. Native diffing, branch-per-change-request, merge on approval. Gitea or GitLab CE self-hosted.</div>
+    </div>
+
+    <div class="item">
+      <span class="item-icon">⚡</span>
+      <div class="item-name">Metric Cache <span class="tech-tag t-redis">Redis</span> <span class="tech-tag t-oss">OSS</span></div>
+      <div class="item-desc">Hot metric cache for frequently queried results. TTL-based eviction. Rate limiting for API gateway. Redis 7 (BSD License).</div>
+    </div>
+  </div>
+</div>
+
+<!-- Arrow 4 -->
+<div class="connector">
+  <div class="connector-line"></div>
+  <div class="connector-label">Source view abstraction — services query source tables in SQL Server</div>
+  <div class="connector-arrow"></div>
+</div>
+
+<!-- ════════════════════ LAYER 5: SOURCES ════════════════════ -->
+<div class="layer">
+  <div class="layer-header">
+    <div class="layer-bar" style="background:#DC2626"></div>
+    <span class="layer-label" style="color:#DC2626">SOURCE LAYER</span>
+    <span class="layer-sub">— Bank Data Sources (all SQL Server in Phase 1)</span>
+  </div>
+  <div class="items">
+    <div class="item" style="border-left: 3px solid #DC2626;">
+      <span class="item-icon">🌐</span>
+      <div class="item-name">Digital Data Mart <span class="tech-tag t-sql">SQL Server</span></div>
+      <div class="item-desc">Web & mobile analytics — sessions, conversions, funnel events, feature usage, crash logs, clickstream data. <strong>Primary MVP source.</strong></div>
+    </div>
+    <div class="item" style="opacity: 0.5; border-style: dashed;">
+      <span class="item-icon">🏦</span>
+      <div class="item-name" style="color:#94A3B8">Core Banking <span class="tech-tag t-sql">SQL Server</span> <span style="font-size:9px;color:#94A3B8;font-weight:400">Phase 2</span></div>
+      <div class="item-desc" style="color:#94A3B8">FIS / Fiserv — accounts, transactions, customer master. Connected in Phase 2 via same source view pattern.</div>
+    </div>
+    <div class="item" style="opacity: 0.5; border-style: dashed;">
+      <span class="item-icon">📡</span>
+      <div class="item-name" style="color:#94A3B8">Event Stream <span style="font-size:9px;color:#94A3B8;font-weight:400">Phase 3</span></div>
+      <div class="item-desc" style="color:#94A3B8">Kafka — real-time clickstream and transaction events. Near-real-time metrics in Phase 3.</div>
+    </div>
+    <div class="item" style="opacity: 0.5; border-style: dashed;">
+      <span class="item-icon">🏗️</span>
+      <div class="item-name" style="color:#94A3B8">Enterprise DW <span class="tech-tag t-sql">SQL Server</span> <span style="font-size:9px;color:#94A3B8;font-weight:400">Phase 2</span></div>
+      <div class="item-desc" style="color:#94A3B8">Consolidated warehouse — historical cross-domain data. Connected in Phase 2.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ FLOW SUMMARY ════════════════════ -->
+<div class="flow-summary">
+  <div class="flow-title">Phase 1 Data Flow Paths</div>
+  <div class="flow-grid">
+    <div class="flow-item">
+      <div class="flow-bar" style="background:#0A8F8F"></div>
+      <div>
+        <div class="flow-label">Query Path</div>
+        <div class="flow-desc">Consumer → GraphQL Gateway → Service → SQL Server (computed store) → Redis Cache → Response</div>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-bar" style="background:#6D28D9"></div>
+      <div>
+        <div class="flow-label">Authoring Path</div>
+        <div class="flow-desc">BankMetric UI → Catalog Service → SQL Server (metadata) + Git Repo → Governance Service → Approval Workflow</div>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-bar" style="background:#1D4ED8"></div>
+      <div>
+        <div class="flow-label">Computation Path</div>
+        <div class="flow-desc">Scheduler → Compute Service → SQL Server (digital data mart source) → SQL Server (computed store) → Redis invalidation</div>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-bar" style="background:#C17A15"></div>
+      <div>
+        <div class="flow-label">Quality Path</div>
+        <div class="flow-desc">Cron → Quality Service → SQL Server (source table checks) → SQL Server (quality_results) → Alert if degraded</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ OSS STACK SUMMARY ════════════════════ -->
+<div class="oss-banner">
+  <span class="oss-banner-icon">🔓</span>
+  <div>
+    <div class="oss-banner-title">100% Open-Source Stack — No Vendor Lock-in</div>
+    <div class="oss-banner-desc">
+      <strong>API Gateway:</strong> Apollo Server (MIT) · GraphQL Shield (MIT) · OPA (Apache 2.0) &nbsp;|&nbsp;
+      <strong>Java Services:</strong> Spring Boot (Apache 2.0) · Apache Calcite (Apache 2.0) · Elasticsearch/OpenSearch (Apache 2.0) &nbsp;|&nbsp;
+      <strong>Python Services:</strong> FastAPI (MIT) · SQLAlchemy (MIT) · Great Expectations (Apache 2.0) · Jinja2 (BSD) &nbsp;|&nbsp;
+      <strong>Storage:</strong> Redis (BSD) · Gitea (MIT) or GitLab CE (MIT) &nbsp;|&nbsp;
+      <strong>Database:</strong> SQL Server (existing bank infrastructure — no new licensing)
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

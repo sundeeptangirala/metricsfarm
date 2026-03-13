@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400">
+<title>BankMetric Store — MVP UI Features by Persona</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #FFFFFF; color: #1A1A2E; font-family: 'IBM Plex Sans', sans-serif; }
+
+/* ── Header ── */
+.header { padding: 32px 48px 24px; border-bottom: 3px solid #0A8F8F; }
+.header-inner { max-width: 1280px; margin: 0 auto; }
+.header-top { display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-mark { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #0A8F8F, #2DD4BF); display: flex; align-items: center; justify-content: center; font-size: 17px; color: white; font-weight: 700; }
+.logo h1 { font-size: 21px; font-weight: 700; color: #1A1A2E; letter-spacing: -0.5px; }
+.badge { background: #E6F5F5; color: #0A8F8F; padding: 3px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; border: 1px solid #B2E0E0; }
+.header-sub { margin: 8px 0 0 52px; font-size: 13px; color: #6B7D99; line-height: 1.5; }
+
+/* ── Section ── */
+.content { max-width: 1280px; margin: 0 auto; padding: 36px 48px 60px; }
+.section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0A8F8F; margin-bottom: 20px; }
+
+/* ── Persona Cards ── */
+.persona-grid { display: flex; flex-direction: column; gap: 28px; }
+
+.persona-card {
+  background: #FAFBFC; border: 1.5px solid #E2E8F0; border-radius: 14px;
+  overflow: hidden; transition: box-shadow 0.2s;
+}
+.persona-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+
+.persona-header {
+  display: flex; align-items: stretch; border-bottom: 1px solid #E2E8F0;
+}
+.persona-avatar-block {
+  padding: 24px 28px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-width: 180px; border-right: 1px solid #E2E8F0;
+}
+.persona-avatar {
+  width: 56px; height: 56px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 24px; margin-bottom: 10px;
+}
+.persona-name { font-size: 14px; font-weight: 700; color: #1A1A2E; text-align: center; }
+.persona-role { font-size: 11px; color: #6B7D99; text-align: center; margin-top: 2px; }
+.persona-count { font-size: 10px; font-weight: 600; color: #0A8F8F; background: #E6F5F5; padding: 2px 10px; border-radius: 20px; margin-top: 8px; }
+
+.persona-info { flex: 1; padding: 20px 28px; display: flex; flex-direction: column; justify-content: center; }
+.persona-goal { font-size: 13px; color: #1A1A2E; line-height: 1.6; margin-bottom: 8px; }
+.persona-goal strong { color: #0A8F8F; }
+.persona-pain { font-size: 11.5px; color: #6B7D99; line-height: 1.5; }
+.persona-pain strong { color: #92400E; }
+
+/* ── Features Grid ── */
+.features-area { padding: 20px 28px 24px; }
+.features-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6B7D99; margin-bottom: 12px; }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+
+.feature-card {
+  background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px;
+  padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
+  transition: all 0.15s;
+}
+.feature-card:hover { border-color: #0A8F8F; box-shadow: 0 0 0 3px rgba(10,143,143,0.06); }
+.feature-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.feature-name { font-size: 12px; font-weight: 600; color: #1A1A2E; margin-bottom: 3px; }
+.feature-desc { font-size: 10.5px; color: #6B7D99; line-height: 1.5; }
+.feature-priority {
+  display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 8px;
+  border-radius: 4px; margin-top: 6px; letter-spacing: 0.3px;
+}
+.p-must { background: #D1FAE5; color: #047857; }
+.p-should { background: #DBEAFE; color: #1D4ED8; }
+.p-nice { background: #F3F4F6; color: #6B7D99; }
+
+/* ── Workflow strip ── */
+.workflow-strip { padding: 16px 28px; background: #F6F8FB; border-top: 1px solid #E2E8F0; }
+.workflow-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6B7D99; margin-bottom: 10px; }
+.workflow-steps { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.workflow-step {
+  background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 8px;
+  padding: 8px 14px; font-size: 11px; font-weight: 500; color: #1A1A2E;
+  display: flex; align-items: center; gap: 6px;
+}
+.workflow-arrow { color: #0A8F8F; font-size: 16px; font-weight: 700; margin: 0 6px; }
+
+/* ── Feature Summary Matrix ── */
+.matrix { margin-top: 40px; }
+.matrix-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0A8F8F; margin-bottom: 16px; }
+.matrix-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.matrix-table th {
+  background: #1A1A2E; color: #FFFFFF; font-weight: 600; padding: 10px 14px;
+  text-align: left; font-size: 10.5px; letter-spacing: 0.3px;
+}
+.matrix-table th:first-child { border-radius: 8px 0 0 0; }
+.matrix-table th:last-child { border-radius: 0 8px 0 0; }
+.matrix-table td { padding: 10px 14px; border-bottom: 1px solid #EDF0F5; color: #374151; }
+.matrix-table tr:hover td { background: #F6F8FB; }
+.matrix-table .check { color: #0A8F8F; font-weight: 700; font-size: 14px; text-align: center; }
+.matrix-table .dash { color: #D0D8E4; text-align: center; }
+.matrix-table .feat-col { font-weight: 600; color: #1A1A2E; min-width: 200px; }
+.matrix-table .pri { text-align: center; }
+.pri-tag { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-mark">◈</div>
+        <h1>BankMetric Store</h1>
+        <span class="badge">MVP UI FEATURES</span>
+      </div>
+    </div>
+    <p class="header-sub">Persona-driven feature map for the Phase 1 MVP. Each persona shows their goals, pain points, primary workflows, and the specific UI features they need. Features are prioritized as <strong style="color:#047857">MUST HAVE</strong>, <strong style="color:#1D4ED8">SHOULD HAVE</strong>, or <strong style="color:#6B7D99">NICE TO HAVE</strong>.</p>
+  </div>
+</div>
+
+<div class="content">
+<div class="section-title">Personas & Their UI Features</div>
+<div class="persona-grid">
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PERSONA 1: METRIC AUTHOR -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="persona-card">
+  <div class="persona-header">
+    <div class="persona-avatar-block">
+      <div class="persona-avatar" style="background:#E6F5F5; color:#0A8F8F;">📝</div>
+      <div class="persona-name">Metric Author</div>
+      <div class="persona-role">Data Analyst / Data Engineer</div>
+      <div class="persona-count">~15 users in Phase 1</div>
+    </div>
+    <div class="persona-info">
+      <div class="persona-goal"><strong>Goal:</strong> Define new metrics or modify existing ones with confidence that the definition is unambiguous, not duplicated, and will go through proper review before anyone consumes it.</div>
+      <div class="persona-pain"><strong>Pain today:</strong> Writes SQL in personal scripts or Excel. No way to know if someone else already defined the same metric differently. Changes go live with no review.</div>
+    </div>
+  </div>
+  <div class="workflow-strip">
+    <div class="workflow-label">Primary Workflow</div>
+    <div class="workflow-steps">
+      <div class="workflow-step">🔍 Search catalog</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">✏️ Author / edit definition</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🧪 Preview SQL output</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🔄 See before/after diff</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🚀 Submit for review</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📬 Get notified on approval</div>
+    </div>
+  </div>
+  <div class="features-area">
+    <div class="features-label">UI Features Needed</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">✏️</span>
+        <div>
+          <div class="feature-name">Metric Definition Form</div>
+          <div class="feature-desc">Structured form: metric key, display name, description, tier, owner, source view, dimensions. Validates snake_case naming.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💻</span>
+        <div>
+          <div class="feature-name">SQL Editor with Syntax Highlighting</div>
+          <div class="feature-desc">Monaco or CodeMirror editor for metric SQL. Syntax highlighting, auto-complete for table/column names from source views.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧪</span>
+        <div>
+          <div class="feature-name">SQL Preview / Dry Run</div>
+          <div class="feature-desc">Execute the metric SQL against SQL Server with sample parameters and show results before submitting. Catches errors early.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <div>
+          <div class="feature-name">Duplicate Detection Alert</div>
+          <div class="feature-desc">On save/submit, run deduplication check. Show similar existing metrics with side-by-side comparison if near-match found.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔄</span>
+        <div>
+          <div class="feature-name">Before / After Diff View</div>
+          <div class="feature-desc">Side-by-side SQL diff when editing an existing metric. Color-coded additions (green) and removals (red). Auto-generated on edit.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💾</span>
+        <div>
+          <div class="feature-name">Save as Draft</div>
+          <div class="feature-desc">Save work-in-progress definitions without triggering review. Draft status visible only to the author and their team.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PERSONA 2: METRIC REVIEWER / STEWARD -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="persona-card">
+  <div class="persona-header">
+    <div class="persona-avatar-block">
+      <div class="persona-avatar" style="background:#EDE9FE; color:#6D28D9;">✅</div>
+      <div class="persona-name">Metric Reviewer</div>
+      <div class="persona-role">Data Steward / Senior Analyst / LOB Lead</div>
+      <div class="persona-count">~8 users in Phase 1</div>
+    </div>
+    <div class="persona-info">
+      <div class="persona-goal"><strong>Goal:</strong> Review proposed metric changes quickly and confidently — understand what changed, why, and what downstream impact it has — then approve or reject with documented reasoning.</div>
+      <div class="persona-pain"><strong>Pain today:</strong> Reviews happen over email or Slack with screenshots of SQL. No structured diff, no impact visibility, no audit trail of approval decisions.</div>
+    </div>
+  </div>
+  <div class="workflow-strip">
+    <div class="workflow-label">Primary Workflow</div>
+    <div class="workflow-steps">
+      <div class="workflow-step">📬 Receive review notification</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🔄 View before/after diff</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📊 Check sample data comparison</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">⚠️ Review downstream impact</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">✅ Approve / ❌ Reject / 💬 Comment</div>
+    </div>
+  </div>
+  <div class="features-area">
+    <div class="features-label">UI Features Needed</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📋</span>
+        <div>
+          <div class="feature-name">Approval Queue Dashboard</div>
+          <div class="feature-desc">Inbox-style list of pending change requests assigned to the reviewer. Sorted by submission date, filterable by tier and metric domain.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔄</span>
+        <div>
+          <div class="feature-name">Side-by-Side Diff Panel</div>
+          <div class="feature-desc">Full SQL diff with line-level highlighting. Metadata changes (description, dimensions, owner) shown alongside SQL changes.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <div>
+          <div class="feature-name">Sample Data Comparison</div>
+          <div class="feature-desc">Run both old and new SQL against recent data. Show results side-by-side so reviewer can see numeric impact of the change.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚠️</span>
+        <div>
+          <div class="feature-name">Downstream Impact Panel</div>
+          <div class="feature-desc">List all dashboards, reports, and API consumers that use this metric. Highlight breaking vs. non-breaking changes.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💬</span>
+        <div>
+          <div class="feature-name">Inline Comments</div>
+          <div class="feature-desc">Add comments on specific lines of the SQL definition. Threaded replies between author and reviewer. Persisted for audit.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">✅</span>
+        <div>
+          <div class="feature-name">Approve / Reject / Request Changes</div>
+          <div class="feature-desc">Three-action buttons with mandatory comment on reject. Approval triggers version publish + downstream notification.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PERSONA 3: METRIC CONSUMER (ANALYST) -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="persona-card">
+  <div class="persona-header">
+    <div class="persona-avatar-block">
+      <div class="persona-avatar" style="background:#DBEAFE; color:#1D4ED8;">📊</div>
+      <div class="persona-name">Metric Consumer</div>
+      <div class="persona-role">Business Analyst / Product Manager / Ops</div>
+      <div class="persona-count">~50+ users in Phase 1</div>
+    </div>
+    <div class="persona-info">
+      <div class="persona-goal"><strong>Goal:</strong> Find the right metric quickly, understand exactly what it measures, trust the data quality, and get the number into their dashboard or analysis without writing SQL.</div>
+      <div class="persona-pain"><strong>Pain today:</strong> Asks three people "which table has session counts?" and gets three different answers. Doesn't know if the number in their dashboard is stale or wrong.</div>
+    </div>
+  </div>
+  <div class="workflow-strip">
+    <div class="workflow-label">Primary Workflow</div>
+    <div class="workflow-steps">
+      <div class="workflow-step">🔍 Search / browse catalog</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📖 Read definition & metadata</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🟢 Check quality score</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📋 Copy GraphQL query</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📊 Use in Tableau / Jupyter</div>
+    </div>
+  </div>
+  <div class="features-area">
+    <div class="features-label">UI Features Needed</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <div>
+          <div class="feature-name">Metric Catalog with Search</div>
+          <div class="feature-desc">Full-text search across metric names, descriptions, and keys. Filter by tier, status, quality score, owner, and domain.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📖</span>
+        <div>
+          <div class="feature-name">Metric Detail Page</div>
+          <div class="feature-desc">Everything about a metric: description, SQL logic, source view, dimensions, owner, version history, quality score, last computed timestamp.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🟢</span>
+        <div>
+          <div class="feature-name">Quality Score Badge</div>
+          <div class="feature-desc">Traffic-light indicator (green/amber/red) on every metric. Click to see which checks passed/failed and when last run.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📋</span>
+        <div>
+          <div class="feature-name">Copy-to-Clipboard Query Builder</div>
+          <div class="feature-desc">Auto-generate GraphQL query for the selected metric with chosen dimensions. One-click copy for pasting into Jupyter, Tableau, or cURL.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📜</span>
+        <div>
+          <div class="feature-name">Version History Timeline</div>
+          <div class="feature-desc">Visual timeline of all definition changes. Click any version to see who changed what, when, and why. Compare any two versions.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔔</span>
+        <div>
+          <div class="feature-name">Subscription / Watch</div>
+          <div class="feature-desc">Follow a metric to get notified when its definition changes or quality degrades. Email or Slack notifications.</div>
+          <span class="feature-priority p-nice">NICE TO HAVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PERSONA 4: DATA ENGINEER / PLATFORM ADMIN -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="persona-card">
+  <div class="persona-header">
+    <div class="persona-avatar-block">
+      <div class="persona-avatar" style="background:#FEF3C7; color:#92400E;">⚙️</div>
+      <div class="persona-name">Platform Admin</div>
+      <div class="persona-role">Data Engineer / Metric Store Team</div>
+      <div class="persona-count">~3–5 users in Phase 1</div>
+    </div>
+    <div class="persona-info">
+      <div class="persona-goal"><strong>Goal:</strong> Keep the metric store healthy — monitor computation jobs, manage source view mappings, configure quality checks, and handle access control. Ensure the platform serves all other personas reliably.</div>
+      <div class="persona-pain"><strong>Pain today:</strong> No centralized view of metric health. Troubleshooting a bad number requires tracing through multiple SQL scripts, Airflow DAGs, and dashboards manually.</div>
+    </div>
+  </div>
+  <div class="workflow-strip">
+    <div class="workflow-label">Primary Workflow</div>
+    <div class="workflow-steps">
+      <div class="workflow-step">📊 Monitor job health</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🔴 Investigate quality alerts</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🗄️ Manage source views</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🔐 Configure access control</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🔄 Trigger backfills</div>
+    </div>
+  </div>
+  <div class="features-area">
+    <div class="features-label">UI Features Needed</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <div>
+          <div class="feature-name">Computation Job Monitor</div>
+          <div class="feature-desc">Dashboard showing batch job status: running, succeeded, failed. Execution time, last run, next scheduled run. Click to see logs.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🟢</span>
+        <div>
+          <div class="feature-name">Quality Health Dashboard</div>
+          <div class="feature-desc">Aggregate quality view across all metrics. Sortable by score. Drill-down to individual check results, failure details, and source freshness.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🗄️</span>
+        <div>
+          <div class="feature-name">Source View Manager</div>
+          <div class="feature-desc">CRUD for source views — map SQL Server tables/views to the abstraction layer. Validate connectivity and column availability.</div>
+          <span class="feature-priority p-must">MUST HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔐</span>
+        <div>
+          <div class="feature-name">Access Control Panel</div>
+          <div class="feature-desc">Manage roles and permissions per metric or tier. Map AD groups to metric access levels. View audit log of access changes.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔄</span>
+        <div>
+          <div class="feature-name">Backfill Trigger</div>
+          <div class="feature-desc">Manually trigger historical recomputation for a metric across a date range. Monitor progress and preview results before promoting.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📈</span>
+        <div>
+          <div class="feature-name">Platform Usage Analytics</div>
+          <div class="feature-desc">Track API query volume, most-queried metrics, active users, adoption trends. Proves ROI to leadership.</div>
+          <span class="feature-priority p-nice">NICE TO HAVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PERSONA 5: LEADERSHIP / EXEC SPONSOR -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="persona-card">
+  <div class="persona-header">
+    <div class="persona-avatar-block">
+      <div class="persona-avatar" style="background:#FDEAEA; color:#C23B3B;">👔</div>
+      <div class="persona-name">Executive Sponsor</div>
+      <div class="persona-role">CDO / VP Analytics / LOB Head</div>
+      <div class="persona-count">~5 users in Phase 1</div>
+    </div>
+    <div class="persona-info">
+      <div class="persona-goal"><strong>Goal:</strong> See that metrics are governed, trustworthy, and widely adopted. Needs a quick pulse on platform health without diving into details. Wants proof the investment is paying off.</div>
+      <div class="persona-pain"><strong>Pain today:</strong> Gets asked "which number is right?" in board meetings. Has no visibility into whether metric governance is actually happening or just aspirational.</div>
+    </div>
+  </div>
+  <div class="workflow-strip">
+    <div class="workflow-label">Primary Workflow</div>
+    <div class="workflow-steps">
+      <div class="workflow-step">📊 View adoption dashboard</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">🟢 Check overall quality health</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📋 Review governance activity</div>
+      <span class="workflow-arrow">→</span>
+      <div class="workflow-step">📈 Track ROI metrics</div>
+    </div>
+  </div>
+  <div class="features-area">
+    <div class="features-label">UI Features Needed</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <div>
+          <div class="feature-name">Executive Summary Dashboard</div>
+          <div class="feature-desc">Single-page view: total metrics governed, quality distribution (green/amber/red), active consumers, approval throughput, adoption trend.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📈</span>
+        <div>
+          <div class="feature-name">Adoption & ROI Scorecard</div>
+          <div class="feature-desc">Metrics governed vs. ungoverned, time saved, reconciliation incidents avoided, query volume growth. Exportable for board reporting.</div>
+          <span class="feature-priority p-nice">NICE TO HAVE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📋</span>
+        <div>
+          <div class="feature-name">Governance Activity Log</div>
+          <div class="feature-desc">Recent approvals, rejections, and pending items. Shows governance is active, not dormant. Filterable by LOB and tier.</div>
+          <span class="feature-priority p-should">SHOULD HAVE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end persona-grid -->
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- FEATURE MATRIX SUMMARY -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="matrix">
+  <div class="matrix-title">MVP Feature × Persona Matrix</div>
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th class="feat-col">UI Feature</th>
+        <th style="text-align:center">Author</th>
+        <th style="text-align:center">Reviewer</th>
+        <th style="text-align:center">Consumer</th>
+        <th style="text-align:center">Admin</th>
+        <th style="text-align:center">Exec</th>
+        <th class="pri">Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="feat-col">Metric Catalog + Search</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Metric Detail Page</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Definition Authoring Form</td><td class="check">●</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">SQL Editor (Syntax Highlighting)</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">SQL Preview / Dry Run</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Before / After Diff View</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Save as Draft</td><td class="check">●</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Approval Queue Dashboard</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Sample Data Comparison</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Approve / Reject / Request Changes</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Quality Score Badge</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Computation Job Monitor</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Quality Health Dashboard</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="check">●</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Source View Manager</td><td class="check">●</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#D1FAE5;color:#047857">MUST</span></td></tr>
+      <tr><td class="feat-col">Downstream Impact Panel</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Inline Comments (on SQL lines)</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Duplicate Detection Alert</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Copy-to-Clipboard Query Builder</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Version History Timeline</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Access Control Panel</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Backfill Trigger</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Executive Summary Dashboard</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="check">●</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Governance Activity Log</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="check">●</td><td class="pri"><span class="pri-tag" style="background:#DBEAFE;color:#1D4ED8">SHOULD</span></td></tr>
+      <tr><td class="feat-col">Subscription / Watch Notifications</td><td class="check">●</td><td class="dash">–</td><td class="check">●</td><td class="dash">–</td><td class="dash">–</td><td class="pri"><span class="pri-tag" style="background:#F3F4F6;color:#6B7D99">NICE</span></td></tr>
+      <tr><td class="feat-col">Platform Usage Analytics</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="check">●</td><td class="pri"><span class="pri-tag" style="background:#F3F4F6;color:#6B7D99">NICE</span></td></tr>
+      <tr><td class="feat-col">Adoption & ROI Scorecard</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">●</td><td class="check">●</td><td class="pri"><span class="pri-tag" style="background:#F3F4F6;color:#6B7D99">NICE</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- MVP SCOPE SUMMARY -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div style="margin-top:36px; padding:24px 28px; background:#E6F5F5; border:1.5px solid #0A8F8F; border-radius:12px;">
+  <div style="font-size:14px; font-weight:700; color:#067070; margin-bottom:8px;">MVP Scope Summary</div>
+  <div style="font-size:12px; color:#1A1A2E; line-height:1.7;">
+    <strong>14 MUST-HAVE features</strong> across 5 personas — this is the MVP cut line. Ship these first. They cover the core loop: <em>author a metric → review the change → approve it → consume it → monitor quality</em>.<br>
+    <strong>9 SHOULD-HAVE features</strong> — build these in the second sprint cycle. They add depth (inline comments, impact analysis, version timeline) but aren't blockers for first value.<br>
+    <strong>3 NICE-TO-HAVE features</strong> — backlog for Phase 1 hardening or Phase 2. Notifications, usage analytics, and ROI scorecards prove long-term value but aren't needed at launch.
+  </div>
+</div>
+
+</div><!-- end content -->
+
+</body>
+</html>
